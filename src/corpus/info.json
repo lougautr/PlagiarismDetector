@@ -1,0 +1,8 @@
+{
+    "database_type": "PostgreSQL",
+    "user" : "postgres",
+    "password": "root",
+    "database_name": "corpus",
+    "port" : 5432,
+    "host" : "localhost"
+}

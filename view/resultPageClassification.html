@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultat - 
+        {{ algo }}
+        -
+        Classification
+    </title>
+</head>
+
+<style>
+    * {
+        color: #586e75;
+    }
+    
+    body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-flow: column nowrap;
+        background-color: bisque;
+        height: 100vh;
+        margin: 0;
+    }
+
+    a {
+        background-color: #e63946;
+        font-size: 19px;
+        border: none;
+        padding: 10px 25px;
+        cursor: pointer;
+        border-radius: 50px;
+        transition: 0.2s ease-in-out;
+        color:  #fefae0;
+        text-decoration: none;
+    }
+
+    a:hover {
+        background-color: #e72435;
+    }
+
+    .word::after {
+        content: ",";
+    }
+
+    word-list:last-child::after{
+        content: "";
+    }
+
+    #word-list {
+        padding: 2%;
+    }
+
+</style>
+<body>
+
+    <h1>Résultat Classification</h1>
+
+    <h3>Le fichier peut être attribué à l'auteur : {{ author }}</h3>
+    <h3>Algorithme utilisé : {{ algo }}</h3>
+    
+    {% if words != [] %}
+    <h3>Les mots les plus utilisés sont :</h3>
+    <p id="word-list">
+        {% for duo in words %}
+            <span class="word">
+                {{ duo.0 }}
+                {{ duo.1 }}
+            </span>
+        {% endfor %}
+    </p>
+    {% endif %}
+
+    <a href="http://localhost:8000/">Retour a la page</a>
+    
+</body>
+</html>

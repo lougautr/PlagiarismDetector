@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta charset="utf-8">
+        <title>Plagiat</title>
+        <meta name="viewport" content="width=device-width">
+
+        <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+    </head>
+        <!--Un peu de style-->
+        <style>
+            * {
+                color: #586e75;
+            }
+
+            body{  
+                font-family: 'Bookman Old Style', serif;
+                height: 100vh;
+	            font-size: 22px;
+	            background-color: #fefae0;
+
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                flex-flow: column nowrap;
+
+                margin: 0;
+            }
+            button {
+	            background-color: #e63946;
+	            font-size: 19px;
+	            border: none;
+	            padding: 10px 25px;
+	            cursor: pointer;
+                border-radius: 50px;
+                transition: 0.2s ease-in-out;
+                color:  #fefae0;
+            }
+            button:hover {
+                background-color: #e72435;
+            }
+            select {
+                background-color: #e63946;
+                padding: 8px 15px;
+                cursor: pointer;
+                border-radius: 50px;
+                transition: 0.2s ease-in-out;
+                color:  #fefae0;
+
+            }
+            select:hover {
+                background-color: #e72435;
+            }
+
+            option, optgroup{
+                color:  #fefae0;
+            }
+
+            .center-row {
+                display: flex;
+                flex-flow: row nowrap;
+                justify-content: space-around;
+                align-items: center;
+            }
+
+            h3 {
+                text-align: center;
+            }
+
+            #loader {
+                display: none;
+                height: 100vh;
+                top: 0;
+                left: 0;
+                background-color: #fefae0;
+
+                justify-content: center;
+                align-items: center;
+                flex-flow: column;
+            }
+
+        </style>
+    <body>
+        <div id="loader">
+            <h1>Comparaison en cours</h1>
+
+            <span  id="myname">
+                <i class="fa fa-spinner fa-4x fa-spin"></i>
+            </span>
+        </div>
+        <h1>Vérificateur de plagiat</h1>
+
+        <section>
+            <h3>Comparez votre document avec notre corpus</h3>
+            <!--Partie classification-->
+            <label for="input-file1" for="input-file3">Sélectionnez votre fichier :</label><br><br>
+                <!--On insère un élément qui permet de parcourir les fichiers du client, ainsi que deux boutons-->
+                <input type="file" id="input-file1" multiple placeholder="Aucun fichier selectionne">
+                <br><br>
+
+                <div class="center-row">
+                    <button type="button" onclick="verifSimi()">Vérifier les similarités</button>
+                    <button type="button" onclick="verifAuteur()">Vérifier l'auteur</button>        
+                </div>
+        </section>
+
+        <hr>
+
+        <!--Partie comparaison-->
+        <section>
+            <h3>Comparez deux de vos documents</h3>
+            <p>Sélectionnez vos fichiers</p>
+            <input type="file" id="input-file2" multiple>
+            <input type="file" id="input-file3" multiple>
+            <br><br>
+            <form>
+                <div class="center-row">
+                <select id="algo">
+                    <optgroup label = "Algorithmes">
+                        {% for val in LISTE_ALGO_COMPARAISON %}
+                            <option value="{{val}}">{{val}}</option>
+                        {% endfor %}
+                    </optgroup>
+                </select>
+                    <button type="button" onclick="verifPlagiat()">Vérifier le plagiat</button>
+                </div>
+            </form>
+    
+        </section>
+
+    <script>
+            //On créé un dictionnaire envoyer les données de classification et un autre pour les données de comparaisons 
+            var dict1 = {}
+            var dict2 = {}
+
+            //On récupère le fichier selectionné, et on l'ajoute à notre premier dictionnaire dict1 avec comme index "file"
+            var input1 = document.getElementById("input-file1");
+            input1.addEventListener("change", function() {
+                var reader = new FileReader();
+                reader.onload = function() {
+                    let fileContent = reader.result;
+
+
+                    dict1["file"] = fileContent;
+                }
+                reader.readAsText(input1.files[0]);
+            });
+
+            //Ici on récupère le premier fichier pour l'ajouter au dict2, avec comme index "file1"
+            var input2 = document.getElementById("input-file2");
+            input2.addEventListener("change", function() {
+                var reader = new FileReader();
+                reader.onload = function() {
+                    var fileContent = reader.result;
+                    dict2["file1"] = fileContent;
+                }
+                reader.readAsText(input2.files[0]);
+            });
+
+            //Et ici on récupère le deuxième fichier pour l'ajouter au dict2, avec comme index "file2"
+            var input3 = document.getElementById("input-file3");
+            input3.addEventListener("change", function() {
+                var reader = new FileReader();
+                reader.onload = function() {
+                    var fileContent = reader.result;
+                    dict2["file2"] = fileContent;
+                }
+                reader.readAsText(input3.files[0]);
+
+
+            });
+            
+            //Les 2 fonctions suivantes envoient les données à l'Api: le fichier selectionné et le type de vérification
+
+            function verifSimi() {
+                //Si le bouton de vérification de similarités est cliqué, le mot "simi" est ajouté au dict1 avec comme index "verif"
+                dict1["verif"] = "simi";
+                                
+                if(Object.keys(dict1).length != 2){
+                    alert("Il manque un fichier")
+                }
+                else{
+                    document.getElementById("loader").style.display = "flex"
+                    
+                    async function postData(url = "", data = {}){
+                        const response = await fetch(url, {
+                            method: "POST",
+                            body: JSON.stringify(data),
+                        });
+                        return response.json();
+                    }
+                    postData("http://localhost:8000/verif", dict1)
+                    .then(response => {
+                        let a = document.createElement("a")
+                        a.href = "http://localhost:8000/comparaison"
+                        a.click()
+
+                    })
+                    //Sinon un message d'erreur s'affiche
+                    .catch(error => {
+                        console.error("Erreur lors de l'envoi des données :", error);
+                    });
+                }
+            }
+            
+            function verifAuteur(){
+                //Si le bouton de vérification d'auteurs est cliqué, le mot "auteur" est ajouté au dict1 avec comme index "verif"
+                dict1["verif"] = "auteur";
+
+                if(Object.keys(dict1).length != 2){
+                    alert("Il manque un fichier")
+                }
+                else{
+                    document.getElementById("loader").style.display = "flex"
+
+                    async function postData(url = "", data = {}){
+                        const response = await fetch(url, {
+                            method: "POST",
+                            body: JSON.stringify(data),
+                        });
+                        return response.json();
+                    }
+                    postData("http://localhost:8000/verif", dict1)
+                    .then(response => {
+                        let a = document.createElement("a")
+                        a.href = "http://localhost:8000/comparaison"
+                        a.click()
+                    })
+                    .catch(error => {
+                        console.error("Erreur lors de l'envoi des données :", error);
+                    });
+
+                }
+            }
+
+            //Cette fonction envoie les données à l'Api: les deux fichiers selectionnés et l'algorithme de comparaison choisit
+            function verifPlagiat() {
+                var select = document.getElementById("algo");
+                var selectedOption = select.options[select.selectedIndex].value;
+                //L'algorithme choisit dans le menu déroulant est ajouté au dict2 avec comme index "algo"
+                dict2["algo"] = selectedOption;
+
+                if(Object.keys(dict2).length != 3){
+                    alert("Il manque des fichiers")
+                }
+                else{
+                    async function postData(url = "", data = {}){
+                        const response = await fetch(url, {
+                            method: "POST",
+                            body: JSON.stringify(data),
+                        });
+                        return response;
+                    }
+
+                    
+                    postData("http://localhost:8000/verif", dict2)
+                    .then(response => {
+                        let a = document.createElement("a")
+                        a.href = "http://localhost:8000/comparaison"
+                        a.click()
+                    })
+                    .catch(error => {
+                        console.error("Erreur lors de l'envoi des données :", error);
+                    });
+                }
+
+            }
+        </script>
+    </body>
+</html>
